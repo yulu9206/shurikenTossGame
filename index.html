@@ -1,0 +1,265 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<title>shuriken toss</title>
+	<style type="text/css">
+		*{
+			padding:0; margin:0;
+		}
+		canvas{
+			background:rgb(242,233,216); display: block; margin:0 auto;
+		}
+	</style>
+</head>
+<body>
+	<canvas id="myCanvas" width="320" height="480"></canvas>
+	<script type="text/javascript">
+
+		//draw things
+
+		var canvas = document.getElementById("myCanvas");
+		var ctx = canvas.getContext("2d");
+		
+		var ninjaWidth = 29;
+		var ninjaHeight = 43;
+		var ninjaX = canvas.width/2 - ninjaWidth/2;
+		var ninjaY = canvas.height - ninjaHeight - 5;
+		var ninjaImageNumber = 1;
+
+		var shurikenWidth = shurikenHeight = 18;
+		var shurikenX = canvas.width/2 - shurikenWidth/2; shurikenY = ninjaY - shurikenHeight;
+		var shurikenImageNumber = 1;
+
+		var poofWidth = poofHeight = 44;
+
+		setInterval(function(){
+			if(ninjaImageNumber == 1) {
+				ninjaImageNumber = 2;
+			} else {
+				ninjaImageNumber = 1;
+			}
+			if(shurikenImageNumber == 1) {
+				shurikenImageNumber = 2;
+			} else if(shurikenImageNumber == 2) {
+				shurikenImageNumber = 3;
+			} else {
+				shurikenImageNumber = 1;
+			}
+		}, 180);
+
+		function drawNinja(posx, posy) {
+			var ninjaImage = new Image();
+			if (ninjaImageNumber == 1) {
+				ninjaImage.src = 'images/up1.png';
+			} else {
+				ninjaImage.src = 'images/up2.png';
+			}
+			ctx.drawImage(ninjaImage, posx, posy, ninjaWidth, ninjaHeight);
+		}
+
+		function drawShuriken(posx, posy){
+			var shurikenImage = new Image();
+			if (shurikenImageNumber == 1) {
+				shurikenImage.src = 'images/ns1.png';
+			} else if (shurikenImageNumber == 2) {
+				shurikenImage.src = 'images/ns1_120.png';
+			} else {
+				shurikenImage.src = 'images/ns1_240.png';
+			}
+			ctx.drawImage(shurikenImage, posx, posy, shurikenWidth, shurikenHeight);
+		}
+
+		function drawpoof(posx, posy){
+			var poofImage = new Image();
+			ctx.drawImage(poofImage, posx, posy, poofWidth, poofHeight);
+		}
+
+		var monsterWidth = 44; monsterHeight = 33;
+		var monsterX = canvas.width/2 - monsterWidth/2; monsterY = canvas.height/2 - monsterHeight/2;
+
+		drawMonster(monsterX, monsterY);
+
+		function drawMonster(posx, posy) {
+			var monsterImage = new Image();
+			monsterImage.src = 'images/monster_transparent.png';
+			ctx.drawImage(monsterImage, posx, posy, monsterWidth, monsterHeight);
+		}
+
+		//draw multipal
+
+		var shurikens = [];
+		addShuriken();
+		function addShuriken() {
+			sy = ninjaY - shurikenHeight;
+			s = {x: ninjaX, y:sy, dx:0, dy:-2};
+			shurikens.push(s);
+		}
+		setInterval(function(){
+			addShuriken();
+		}, 500);
+
+		function drawMoveShurikens() {
+			for(i = 0; i < shurikens.length; i++) {
+				s = shurikens[i];
+				drawShuriken(s.x, s.y);
+				s.y = s.y + s.dy;
+				if(s.y < 0) {
+					shurikens.splice(i, 1);
+				}
+			}
+		}
+
+		var monsters = [];
+		addMonster();
+		function addMonster() {
+			sx = Math.random() * canvas.width;
+			s = {x: sx, y:0, dx:0, dy:+2};
+			monsters.push(s);
+		}
+		setInterval(function(){
+			addMonster();
+		}, 500);
+
+		function drawMultMonsters() {
+			for(i = 0; i < monsters.length; i++) {
+				s = monsters[i];
+				drawMonster(s.x, s.y);
+				s.y = s.y + s.dy;
+				if(s.y > canvas.height) {
+					monsters.splice(i, 1);
+				}
+			}
+		}
+
+		//make ninja move with right and left keydown
+
+		var ninjaMovement = 3;
+
+		document.addEventListener("keydown", keyDownHandler);
+		document.addEventListener("keyup", keyUpHandler);
+
+		function keyDownHandler(e) {
+			if(e.keyCode == 39) {
+				rightPressed = true;
+			} else if(e.keyCode == 37) {
+				leftPressed = true;
+			}
+		};
+
+		function keyUpHandler(e) {
+			if(e.keyCode == 39) {
+				rightPressed = false;
+			} else if(e.keyCode == 37) {
+				leftPressed = false;
+			}
+		}
+		
+		var rightPressed = leftPressed = false;
+
+		//draw lives 
+
+		var lives = 3;
+		function drawLives() {
+			ctx.font = "16px Arial";
+			ctx.fillStyll = "#0095DD";
+			ctx.fillText("Lives:" + lives, canvas.width-65, 20);
+		}
+
+		//draw scores
+
+		var scores = 0;
+		function drawscores() {
+			ctx.font = "16px Arial";
+			ctx.fillStyll = "#0095DD";
+			ctx.fillText("Scores:" + scores, 15, 20);
+		}
+
+		//collision
+
+		var poofVolume = .8;
+		function collision() {
+			for(i = 0; i < monsters.length; i++) {
+				monster = monsters[i];
+				monsterminx = monster.x;
+				monstermaxx = monster.x + monsterWidth;
+				monsterminy = monster.y;
+				monstermaxy = monster.y + monsterHeight;
+
+				ninjaminx = ninjaX;
+				ninjamaxx = ninjaX + ninjaWidth;
+				ninjaminy = ninjaY;
+				ninjamaxy = ninjaY + ninjaHeight;
+
+				if((ninjamaxx > monsterminx && ninjaminx < monstermaxx) && (monstermaxy > ninjaminy && monsterminy < ninjamaxy)) {
+					monsters.splice(i, 1);
+					lives -= 1;
+				}
+
+				for(j = 0; j < shurikens.length; j++) {
+					shuriken = shurikens[j];
+					shurikenminx = shuriken.x;
+					shurikenmaxx = shuriken.x + shurikenWidth;
+					shurikenminy = shuriken.y;
+					shurikenmaxy = shuriken.y + shurikenHeight;
+
+					if((shurikenmaxx > monsterminx && shurikenminx < monstermaxx) && (monstermaxy > shurikenminy && monsterminy < shurikenmaxy)) {
+						monsters.splice(i, 1);
+						shurikens.splice(j, 1);
+						scores += 1;
+						drawpoof(monster.x, monster.y);
+						poofAudio = document.createElement("audio");
+						poofAudio.src = "audio/poof.wav";
+						poofAudio.volume = poofVolume;
+						poofAudio.play(); 
+
+					}
+				}
+			}
+		}
+
+
+		//activation process
+		draw();
+
+		function draw(){
+			ctx.clearRect(0, 0, canvas.width, canvas.height);
+			drawNinja(ninjaX, ninjaY);
+			if(rightPressed) {
+				ninjaX += ninjaMovement;
+			} else if(leftPressed) {
+				ninjaX -= ninjaMovement;
+			}			
+			drawMoveShurikens();
+			drawMultMonsters();
+			collision();
+			drawLives();
+			drawscores();
+
+			if(lives == 0) {
+				gameOver();
+			} else {
+				requestAnimationFrame(draw);
+			}
+		}
+
+		function gameOver(){
+			ctx.clearRect(0, 0, canvas.width, canvas.height);
+			drawNinja(ninjaX, ninjaY);			
+			drawMoveShurikens();
+			drawMultMonsters();
+			drawLives();
+			
+			ctx.fillStyll = "Black";
+			ctx.font = "16px Arial";
+			ctx.fillText("GAME OVER", canvas.width/2-50, canvas.height/2-10);
+			ctx.fillText("Final Score:" + scores, canvas.width/2-45, canvas.height/2 + 20);
+
+			setTimeout(function(){
+				document.location.reload();
+			}, 3000);
+		}
+
+
+	</script>
+</body>
+</html>
